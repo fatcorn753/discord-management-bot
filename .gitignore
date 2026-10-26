@@ -1,0 +1,14 @@
+# 機密・実行時データ（絶対にコミットしない）
+config.json
+data/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.DS_Store
+config.json.*
+.pytest_cache/
