@@ -21,9 +21,10 @@ import traceback
 
 import discord
 from discord import app_commands
-from discord.ext import commands
 
+from core import approval
 from core import helpers as h
+from core.gated_bot import GatedBot
 from core.store import Store
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -46,11 +47,13 @@ class BotTree(app_commands.CommandTree):
     """全スラッシュコマンド共通のガードとエラー応答。"""
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if approval.is_owner_dm_command(interaction):       # 持ち主の「運営」コマンドは、Bot とのDMで使える
+            return True
         if interaction.guild is None:
             await interaction.response.send_message(
                 embed=h.error_embed("利用不可", "このコマンドはサーバー内でのみ使えます。"), ephemeral=True)
             return False
-        return True
+        return await approval.guard(interaction)          # 許可リスト・持ち主の承認
 
     async def on_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         cause = getattr(error, "original", error)
@@ -60,7 +63,7 @@ class BotTree(app_commands.CommandTree):
         elif isinstance(cause, discord.Forbidden):
             text = "Bot の権限が足りないため実行できませんでした。権限とロール順位を確認してください。"
         elif isinstance(cause, discord.HTTPException):
-            text = f"Discord 側のエラーで失敗しました（コード {cause.status}）。時間をおいてもう一度お試しください。続く場合は管理者へ連絡してください。"
+            text = "Discord 側のエラーで失敗しました。時間をおいてもう一度お試しください。続く場合は管理者へ連絡してください。"
         else:
             traceback.print_exception(type(error), error, error.__traceback__)
             text = "予期しないエラーが発生しました。続く場合は、実行したコマンドと時刻を管理者に伝えてください。"
@@ -83,7 +86,7 @@ intents.message_content = True   # メッセージ内容（automod / prefix コ�
 intents.members = True           # 入退室・メンバー情報
 intents.guilds = True
 
-bot = commands.Bot(
+bot = GatedBot(
     command_prefix=config.get("prefix", "!"),
     intents=intents,
     help_command=None,

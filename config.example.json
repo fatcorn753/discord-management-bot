@@ -3,6 +3,9 @@
     "status": "/ヘルプ でコマンド一覧",
     "test_guild_id": null,
     "utc_offset_hours": 9,
+    "require_approval": false,
+    "owner_ids": [],
+    "allowed_guild_ids": [],
     "support_url": null,
     "privacy_url": null,
     "terms_url": null
